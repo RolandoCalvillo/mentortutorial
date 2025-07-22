@@ -1,433 +1,675 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tutorial Interactivo para Mentores | Universidad Virtual CNCI</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Custom font for a friendly and modern look */
-        body {
-            font-family: "Inter", sans-serif;
-            background-color: #f0f4f8; /* Light background */
-            color: #333;
-        }
-        /* Styling for headings */
-        h1, h2, h3 {
-            color: #1a202c; /* Darker text for headings */
-        }
-        /* Custom styles for better readability and aesthetics */
-        .container {
-            max-width: 1000px;
-        }
-        .page-section {
-            background-color: #ffffff;
-            border-radius: 1rem; /* Rounded corners for pages */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Soft shadow */
-            padding: 2.5rem;
-            margin-bottom: 2rem;
-            display: none; /* Hidden by default, controlled by JS */
-        }
-        .page-section.active {
-            display: block; /* Show active page */
-        }
-        .module-card {
-            background-color: #e0f2fe; /* Light blue for module cards */
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-            text-align: center;
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-            cursor: pointer;
-            border: 1px solid #90cdf4;
-        }
-        .module-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 20px -5px rgba(0, 0, 0, 0.15), 0 6px 10px -3px rgba(0, 0, 0, 0.08);
-        }
-        .module-section-content {
-            border-left: 5px solid #3b82f6; /* Blue border for modules */
-            padding-left: 1.5rem;
-        }
-        .sub-module-section {
-            background-color: #f0f9ff; /* Lighter blue for sub-sections */
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-            margin-top: 1rem;
-            margin-bottom: 1rem;
-        }
-        .case-study-box {
-            background-color: #ecfdf5; /* Light green for case studies */
-            border-left: 4px solid #10b981; /* Green border */
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin-top: 1rem;
-            margin-bottom: 1rem;
-        }
-        .suggestion-box {
-            background-color: #fffbeb; /* Light yellow for suggestions */
-            border-left: 4px solid #f59e0b; /* Orange border */
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin-top: 0.5rem;
-        }
-        .btn-primary {
-            background-color: #3b82f6;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: bold;
-            transition: background-color 0.2s ease-in-out;
-        }
-        .btn-primary:hover {
-            background-color: #2563eb;
-        }
-        .btn-secondary {
-            background-color: #60a5fa;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: bold;
-            transition: background-color 0.2s ease-in-out;
-        }
-        .btn-secondary:hover {
-            background-color: #3b82f6;
-        }
-        .diagram-placeholder {
-            background-color: #e2e8f0;
-            border: 1px dashed #94a3b8;
-            padding: 1.5rem;
-            margin: 1.5rem 0;
-            text-align: center;
-            color: #475569;
-            font-style: italic;
-            border-radius: 0.5rem;
-        }
-    </style>
-</head>
-<body class="antialiased leading-normal tracking-wide">
+import React, { useState, useEffect } from 'react';
+import * as Tone from 'tone'; // Import Tone.js for sounds
 
-    <header class="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-8 shadow-lg">
-        <div class="container mx-auto px-4 text-center">
-            <h1 class="text-4xl md:text-5xl font-bold mb-2">Tutorial Interactivo para Mentores</h1>
-            <p class="text-xl md:text-2xl">Universidad Virtual CNCI</p>
-        </div>
-    </header>
+// Initialize Tone.js for click sounds
+const clickSynth = new Tone.PolySynth(Tone.Synth, {
+    oscillator: {
+        type: "sine"
+    },
+    envelope: {
+        attack: 0.005,
+        decay: 0.1,
+        sustain: 0.05,
+        release: 0.1
+    }
+}).toDestination();
 
-    <main class="container mx-auto px-4 py-8">
+// Main App Component
+const App = () => {
+    // State to manage the currently active module
+    const [activeModule, setActiveModule] = useState('welcome');
+    // State to track completed modules for visual progress
+    const [completedModules, setCompletedModules] = useState({});
+    // State to manage quiz results
+    const [quizResults, setQuizResults] = useState({});
+    // State for the contact form message (kept for potential future use or if user wants to revert)
+    const [contactMessage, setContactMessage] = useState('');
+    // State for showing a message box (e.g., for quiz results, form submission)
+    const [messageBox, setMessageBox] = useState({ visible: false, title: '', message: '' });
 
-        <section id="home-page" class="page-section active">
-            <div class="text-center mb-8">
-                <img src="logo Mentoría Universitaria.PNG" alt="Logo Mentoría Universitaria CNCI" class="mx-auto mb-6 w-64 h-auto rounded-lg shadow-md">
-                <h2 class="text-3xl md:text-4xl font-bold mb-4 text-blue-700">¡Bienvenido, Futuro Mentor Inspirador! ✨</h2>
-                <p class="text-lg leading-relaxed mb-6">
-                    Este tutorial digital es tu guía práctica para potenciar tus habilidades de acompañamiento y convertirte en un pilar fundamental para los estudiantes de nuevo ingreso. Tu rol como mentor es mucho más que una tarea; es una oportunidad para impactar vidas, compartir tu experiencia y ser el puente que conecte a los nuevos alumnos con el éxito en nuestro innovador modelo educativo virtual.
-                </p>
-                <p class="text-lg leading-relaxed mb-8">
-                    En la CNCI, creemos en el poder de la comunidad y en el apoyo entre pares, y tú eres la clave para que cada estudiante se sienta bienvenido, motivado y acompañado desde el primer día. ¡Prepárate para inspirar y hacer la diferencia! 🚀
-                </p>
-            </div>
+    // Define the structure of the modules and their content
+    const modules = [
+        { id: 'welcome', title: 'Bienvenida', icon: '👋' },
+        { id: 'que-es-mentor', title: '¿Qué es ser un mentor CNCI?', icon: '🤔' },
+        { id: 'perfil-estudiante', title: 'Perfil del estudiante de nuevo ingreso', icon: '🧑‍🎓' },
+        { id: 'habilidades-mentor', title: 'Habilidades esenciales del mentor', icon: '🧠' },
+        { id: 'herramientas-digitales', title: 'Herramientas digitales y canales', icon: '💻' },
+        { id: 'casos-practicos', title: 'Casos prácticos y situaciones', icon: '📝' },
+        { id: 'preguntas-frecuentes', title: 'Preguntas frecuentes', icon: '❓' },
+        { id: 'recursos-adicionales', title: 'Recursos adicionales', icon: '📚' },
+        { id: 'testimonios-mentores', title: 'Testimonios de Mentores', icon: '🗣️' }, // Updated module
+    ];
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div class="module-card" onclick="showPage('module1-page')">
-                    <h3 class="text-xl font-semibold text-blue-800 mb-2">Módulo 1: Acompañamiento Efectivo 🤝</h3>
-                    <p class="text-gray-700">Descubre cómo guiar a tus estudiantes.</p>
-                </div>
-                <div class="module-card" onclick="showPage('module2-page')">
-                    <h3 class="text-xl font-semibold text-blue-800 mb-2">Módulo 2: Comunicación que Conecta 💬</h3>
-                    <p class="text-gray-700">Domina la empatía y asertividad.</p>
-                </div>
-                <div class="module-card" onclick="showPage('module3-page')">
-                    <h3 class="text-xl font-semibold text-blue-800 mb-2">Módulo 3: Herramientas Digitales 💻</h3>
-                    <p class="text-gray-700">Usa correo, WhatsApp y plataformas eficazmente.</p>
-                </div>
-                <div class="module-card" onclick="showPage('module4-page')">
-                    <h3 class="text-xl font-semibold text-blue-800 mb-2">Módulo 4: Manejo de Dificultades 💡</h3>
-                    <p class="text-gray-700">Ayuda a superar obstáculos comunes.</p>
-                </div>
-                <div class="module-card" onclick="showPage('module5-page')">
-                    <h3 class="text-xl font-semibold text-blue-800 mb-2">Módulo 5: Casos Prácticos 🧠</h3>
-                    <p class="text-gray-700">Aprende con ejemplos reales.</p>
-                </div>
-                <div class="module-card" onclick="showPage('conclusion-page')">
-                    <h3 class="text-xl font-semibold text-blue-800 mb-2">Cierre y Motivación 🎉</h3>
-                    <p class="text-gray-700">Reflexiona sobre tu impacto.</p>
-                </div>
-            </div>
-        </section>
+    // Quiz data for each module (simplified for demonstration)
+    const quizzes = {
+        'que-es-mentor': [
+            { question: '¿Cuál es el objetivo principal de un mentor CNCI?', options: ['Asignar tareas', 'Brindar apoyo y guía', 'Evaluar el rendimiento', 'Reemplazar a los tutores'], answer: 'Brindar apoyo y guía' },
+            { question: '¿Es el rol del mentor imponer soluciones?', options: ['Sí', 'No'], answer: 'No' },
+        ],
+        'habilidades-mentor': [
+            { question: '¿Qué habilidad es crucial para entender al alumno?', options: ['Dominio técnico', 'Escucha activa', 'Velocidad de respuesta', 'Memoria fotográfica'], answer: 'Escucha activa' },
+            { question: 'La empatía significa:', options: ['Sentir lástima por el alumno', 'Ponerse en el lugar del alumno', 'Dar consejos sin preguntar', 'Ignorar sus problemas'], answer: 'Ponerse en el lugar del alumno' },
+        ],
+    };
 
-        <section id="module1-page" class="page-section">
-            <h2 class="text-3xl font-bold mb-6 text-blue-700">Módulo 1: El Arte del Acompañamiento Efectivo 🤝</h2>
-            <p class="text-lg leading-relaxed mb-6">
-                El seguimiento no es solo preguntar "¿cómo vas?". Es un proceso continuo de escucha, proactividad y adaptación. ¡Tu guía es fundamental! 🧭
-            </p>
+    // Checklists for each module
+    const checklists = {
+        'habilidades-mentor': [
+            { id: 'escucha', text: 'Practicar la escucha activa', completed: false },
+            { id: 'empatia', text: 'Mostrar empatía y comprensión', completed: false },
+            { id: 'comunicacion', text: 'Comunicarse de forma clara y asertiva', completed: false },
+            { id: 'seguimiento', text: 'Realizar seguimiento periódico', completed: false },
+        ],
+        'herramientas-digitales': [
+            { id: 'aulas', text: 'Familiarizarse con las Aulas Virtuales', completed: false },
+            { id: 'correo', text: 'Conocer el uso del correo institucional', completed: false },
+            { id: 'soporte', text: 'Saber cómo contactar a soporte técnico', completed: false },
+        ]
+    };
 
-            <div class="module-section-content">
-                <h3 class="text-2xl font-semibold mb-4 text-blue-600">1.1 Buenas Prácticas para un Seguimiento y Apoyo Exitoso:</h3>
-                <ul class="list-disc pl-6 text-lg space-y-3">
-                    <li>
-                        <strong>Proactividad es Clave:</strong> No esperes a que te busquen. Realiza acercamientos iniciales y periódicos para saber cómo se sienten, si tienen dudas o si enfrentan algún desafío. Un mensaje a tiempo puede evitar que un pequeño problema se convierta en una gran frustración. 📩
-                    </li>
-                    <li>
-                        <strong>Establece Expectativas Claras:</strong> Desde el inicio, explica tu rol, cómo puedes ayudar y cuáles son los canales y horarios en los que estarás disponible. Esto genera confianza y claridad. ✅
-                    </li>
-                    <li>
-                        <strong>Fomenta la Autonomía:</strong> Tu objetivo es guiar, no hacer el trabajo por ellos. Anima a los estudiantes a buscar soluciones, a investigar y a desarrollar sus propias habilidades de aprendizaje autónomo. 🧠
-                    </li>
-                    <li>
-                        <strong>Personaliza el Apoyo:</strong> Cada estudiante es un mundo. Identifica sus necesidades individuales. Algunos necesitarán apoyo académico, otros motivación, y algunos simplemente un espacio para desahogarse. 🧑‍🎓
-                    </li>
-                    <li>
-                        <strong>Celebra los Pequeños Logros:</strong> Reconoce y felicita sus avances, por mínimos que parezcan. Esto refuerza su motivación y les hace sentir valorados. 🎉
-                    </li>
-                    <li>
-                        <strong>Sé un Enlace Eficaz:</strong> Si el estudiante tiene una duda que escapa a tu conocimiento (administrativa, técnica, etc.), no dudes en canalizarlo con la persona o departamento correcto y, si es posible, haz un seguimiento para asegurar que su inquietud fue resuelta. 🔗
-                    </li>
-                </ul>
-                <div class="diagram-placeholder">
-                    [Diagrama: Ciclo de Acompañamiento del Mentor]
-                    <p>Inicio -> Proactividad -> Escucha Activa -> Personalización -> Apoyo/Canalización -> Celebración de Logros -> (Repetir)</p>
-                </div>
-            </div>
-            <button class="btn-primary mt-8" onclick="showPage('home-page')">Volver al Inicio</button>
-        </section>
+    // State to manage checklist items
+    const [currentChecklists, setCurrentChecklists] = useState(checklists);
 
-        <section id="module2-page" class="page-section">
-            <h2 class="text-3xl font-bold mb-6 text-blue-700">Módulo 2: Comunicación que Conecta y Empodera 💬</h2>
-            <p class="text-lg leading-relaxed mb-6">
-                Una comunicación efectiva es la base de una relación de mentoría sólida. ¡Conecta de verdad! ❤️
-            </p>
+    // Function to play a discrete click sound
+    const playClickSound = () => {
+        Tone.start(); // Ensure audio context is started on user interaction
+        clickSynth.triggerAttackRelease("C5", "8n"); // Play a C5 note for a short duration
+    };
 
-            <div class="module-section-content">
-                <h3 class="text-2xl font-semibold mb-4 text-blue-600">2.1 Estrategias de Comunicación Empática y Asertiva:</h3>
-                <ul class="list-disc pl-6 text-lg space-y-3">
-                    <li>
-                        <strong>Escucha Activa:</strong> Presta atención no solo a lo que dicen, sino a cómo lo dicen. Observa el tono, las pausas, las emociones. Permite que el estudiante se exprese sin interrupciones. 👂
-                    </li>
-                    <li>
-                        <strong>Empatía Genuina:</strong> Ponte en sus zapatos. Recuerda tus inicios en la universidad virtual. Valida sus sentimientos y preocupaciones. Frases como "Entiendo que esto puede ser un desafío" o "Es normal sentirse así al principio" pueden abrir puertas. 🤗
-                    </li>
-                    <li>
-                        <strong>Asertividad con Respeto:</strong> Expresa tus ideas, consejos y límites de manera clara, directa y respetuosa. Si necesitas corregir o dar una recomendación, enfócala en el comportamiento o la situación, no en la persona. Por ejemplo, en lugar de "Eres desorganizado", di "Quizás podríamos explorar nuevas formas de organizar tus tiempos". 🗣️
-                    </li>
-                    <li>
-                        <strong>Lenguaje Positivo y Motivador:</strong> Utiliza palabras que inspiren y construyan. Enfócate en las soluciones y en el potencial del estudiante. ✨
-                    </li>
-                    <li>
-                        <strong>Claridad y Concisión:</strong> Evita la jerga académica compleja. Sé directo y claro en tus mensajes para evitar malentendidos. 📝
-                    </li>
-                    <li>
-                        <strong>Feedback Constructivo:</strong> Cuando des retroalimentación, sé específico, oportuno y enfócate en el crecimiento. Sugiere acciones concretas para mejorar. 📈
-                    </li>
-                </ul>
-                <div class="diagram-placeholder">
-                    [Diagrama: Pilares de la Comunicación Efectiva]
-                    <p>Empatía + Asertividad + Escucha Activa = Comunicación Efectiva</p>
-                </div>
-            </div>
-            <button class="btn-primary mt-8" onclick="showPage('home-page')">Volver al Inicio</button>
-        </section>
+    // Function to handle quiz submission
+    const handleSubmitQuiz = (moduleId, answers) => {
+        let score = 0;
+        const moduleQuiz = quizzes[moduleId];
+        let correctAnswersCount = 0;
 
-        <section id="module3-page" class="page-section">
-            <h2 class="text-3xl font-bold mb-6 text-blue-700">Módulo 3: Dominando las Herramientas Digitales 💻</h2>
-            <p class="text-lg leading-relaxed mb-6">
-                En un entorno virtual, tus herramientas de comunicación son tus aliadas. ¡Sácales el máximo provecho! 🛠️
-            </p>
-
-            <div class="module-section-content">
-                <h3 class="text-2xl font-semibold mb-4 text-blue-600">3.1 Consejos para el Uso Efectivo de Herramientas:</h3>
-                <div class="space-y-6">
-                    <div class="sub-module-section">
-                        <h4 class="text-xl font-semibold mb-2 text-blue-500">Correo Electrónico: 📧</h4>
-                        <ul class="list-disc pl-6 text-lg space-y-2">
-                            <li><strong>Asunto Claro:</strong> Un asunto descriptivo (`Seguimiento - [Nombre del Estudiante]`, `Duda sobre plataforma - [Tu Nombre]`) facilita la gestión.</li>
-                            <li><strong>Saludo Personalizado:</strong> Siempre inicia con un saludo amigable y el nombre del estudiante. 👋</li>
-                            <li><strong>Mensajes Concisos:</strong> Ve al grano. Si es un mensaje largo, usa párrafos cortos y viñetas. 🎯</li>
-                            <li><strong>Llamada a la Acción:</strong> Si esperas una respuesta o una acción, indícalo claramente al final. ➡️</li>
-                            <li><strong>Firma Profesional:</strong> Incluye tu nombre, tu rol como mentor y tu contacto si aplica. ✍️</li>
-                        </ul>
-                    </div>
-                    <div class="sub-module-section">
-                        <h4 class="text-xl font-semibold mb-2 text-blue-500">WhatsApp (o herramientas de mensajería instantánea): 📱</h4>
-                        <ul class="list-disc pl-6 text-lg space-y-2">
-                            <li><strong>Disponibilidad y Límites:</strong> Define un horario para responder y comunícaselo. No tienes que estar disponible 24/7. ⏰</li>
-                            <li><strong>Respuestas Rápidas (pero no impulsivas):</strong> Para dudas sencillas, una respuesta ágil es ideal. Para temas complejos, puedes decir "Déjame investigar y te respondo en [tiempo]" o "Podríamos agendar una videollamada para esto". ⚡</li>
-                            <li><strong>Evita Mensajes Largos:</strong> Si el tema requiere mucha explicación, sugiere una llamada o videollamada. 📞</li>
-                            <li><strong>Uso de Audios con Moderación:</strong> Son útiles, pero no todos pueden escucharlos en cualquier momento. Pregunta si es un buen momento para un audio. 🎙️</li>
-                        </ul>
-                    </div>
-                    <div class="sub-module-section">
-                        <h4 class="text-xl font-semibold mb-2 text-blue-500">Videollamadas (Teams, Zoom, etc.): 📹</h4>
-                        <ul class="list-disc pl-6 text-lg space-y-2">
-                            <li><strong>Prepara la Agenda:</strong> Ten claros los puntos a tratar para aprovechar el tiempo. 🗒️</li>
-                            <li><strong>Ambiente Adecuado:</strong> Busca un lugar tranquilo y con buena iluminación. Anima al estudiante a hacer lo mismo. 🏡</li>
-                            <li><strong>Contacto Visual:</strong> Mira a la cámara para simular contacto visual y generar cercanía. 👀</li>
-                            <li><strong>Comparte Pantalla:</strong> Si necesitas mostrar algo en la plataforma, ¡aprovéchalo! 🖥️</li>
-                            <li><strong>Resume los Acuerdos:</strong> Al final, recapitula los puntos clave y los próximos pasos. ✅</li>
-                        </ul>
-                    </div>
-                    <div class="sub-module-section">
-                        <h4 class="text-xl font-semibold mb-2 text-blue-500">Plataformas de la Universidad (Canvas, Moodle, etc.): 🌐</h4>
-                        <ul class="list-disc pl-6 text-lg space-y-2">
-                            <li><strong>Conócelas a Fondo:</strong> Familiarízate con todas las secciones: foros, módulos, calificaciones, mensajería interna. Tu conocimiento les dará seguridad. 📚</li>
-                            <li><strong>Guía Paso a Paso:</strong> Si el estudiante tiene problemas para navegar, guíalo con instrucciones claras y precisas. 👣</li>
-                            <li><strong>Recursos y Tutoriales:</strong> Comparte los enlaces a los tutoriales o guías que la universidad ya ofrece sobre el uso de la plataforma. 💡</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <button class="btn-primary mt-8" onclick="showPage('home-page')">Volver al Inicio</button>
-        </section>
-
-        <section id="module4-page" class="page-section">
-            <h2 class="text-3xl font-bold mb-6 text-blue-700">Módulo 4: Navegando Juntos por las Dificultades 💡</h2>
-            <p class="text-lg leading-relaxed mb-6">
-                Es normal que los estudiantes enfrenten obstáculos; tu apoyo es crucial para superarlos. ¡Sé su guía en el camino! 🗺️
-            </p>
-
-            <div class="module-section-content">
-                <h3 class="text-2xl font-semibold mb-4 text-blue-600">4.1 Manejo de Dificultades Comunes:</h3>
-                <div class="space-y-6">
-                    <div class="sub-module-section">
-                        <h4 class="text-xl font-semibold mb-2 text-blue-500">Falta de Motivación o Desinterés: 😴</h4>
-                        <ul class="list-disc pl-6 text-lg space-y-2">
-                            <li><strong>Identifica la Causa:</strong> ¿Es cansancio, aburrimiento, miedo al fracaso, problemas personales? 🤔</li>
-                            <li><strong>Reconecta con sus Metas:</strong> Recuérdales por qué iniciaron este camino. ¿Qué los impulsó? 🌟</li>
-                            <li><strong>Divide Tareas:</strong> Sugiere dividir grandes tareas en pasos más pequeños y manejables. 🧩</li>
-                            <li><strong>Historias de Éxito:</strong> Comparte tu propia experiencia o la de otros estudiantes que superaron desafíos similares. 🏆</li>
-                        </ul>
-                    </div>
-                    <div class="sub-module-section">
-                        <h4 class="text-xl font-semibold mb-2 text-blue-500">Desorganización y Problemas de Gestión del Tiempo: 🗓️</h4>
-                        <ul class="list-disc pl-6 text-lg space-y-2">
-                            <li><strong>Herramientas de Planificación:</strong> Sugiere el uso de calendarios, agendas digitales o apps de gestión de tareas. 📅</li>
-                            <li><strong>Priorización:</strong> Ayúdales a identificar lo más importante y urgente. 🔝</li>
-                            <li><strong>Establece Rutinas:</strong> Anímales a crear un horario de estudio regular y a respetarlo. 🔄</li>
-                            <li><strong>Bloques de Tiempo:</strong> Explícales la técnica Pomodoro o la de bloques de tiempo para concentrarse. ⏱️</li>
-                        </ul>
-                    </div>
-                    <div class="sub-module-section">
-                        <h4 class="text-xl font-semibold mb-2 text-blue-500">Aislamiento y Falta de Conexión: 😔</h4>
-                        <ul class="list-disc pl-6 text-lg space-y-2">
-                            <li><strong>Fomenta la Participación:</strong> Anímales a participar en foros, grupos de estudio o actividades extracurriculares de la universidad. 🗣️</li>
-                            <li><strong>Conecta con Pares:</strong> Si es posible y con su consentimiento, conéctalos con otros estudiantes con intereses similares. 🧑‍🤝‍🧑</li>
-                            <li><strong>Espacios Virtuales:</strong> Recuérdales la existencia de cafeterías virtuales, clubes o eventos online de la CNCI. ☕</li>
-                        </ul>
-                    </div>
-                    <div class="sub-module-section">
-                        <h4 class="text-xl font-semibold mb-2 text-blue-500">Dificultades Académicas Específicas: 📚</h4>
-                        <ul class="list-disc pl-6 text-lg space-y-2">
-                            <li><strong>Identifica la Raíz del Problema:</strong> ¿Es un tema específico, una habilidad de estudio, o la comprensión de las instrucciones? 🔍</li>
-                            <li><strong>Recursos de la Universidad:</strong> Dirígelos a los recursos académicos disponibles: tutores, bibliotecas virtuales, materiales de apoyo. 📖</li>
-                            <li><strong>Técnicas de Estudio:</strong> Sugiere técnicas de estudio efectivas (mapas mentales, resúmenes, flashcards). ✍️</li>
-                            <li><strong>Fomenta la Pregunta:</strong> Reitera que no hay preguntas tontas y que es mejor preguntar a quedarse con la duda. ❓</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="diagram-placeholder">
-                    [Diagrama: Árbol de Decisiones para Dificultades Comunes]
-                    <p>Problema -> Identificar Causa -> Sugerir Solución -> Conectar con Recursos -> Seguimiento</p>
-                </div>
-            </div>
-            <button class="btn-primary mt-8" onclick="showPage('home-page')">Volver al Inicio</button>
-        </section>
-
-        <section id="module5-page" class="page-section">
-            <h2 class="text-3xl font-bold mb-6 text-blue-700">Módulo 5: Casos Prácticos para Reflexionar 🧠</h2>
-            <p class="text-lg leading-relaxed mb-6">
-                Aquí te presentamos algunas situaciones comunes. ¡Piensa cómo las abordarías! 🧐
-            </p>
-
-            <div class="module-section-content space-y-6">
-                <h3 class="text-2xl font-semibold mb-4 text-blue-600">5.1 Ejemplos Breves:</h3>
-                <div class="case-study-box">
-                    <h4 class="text-xl font-semibold mb-2 text-green-700">Caso 1: El Estudiante Silencioso. 🤫</h4>
-                    <p class="mb-2"><strong>Situación:</strong> Has enviado varios mensajes a Juan, un estudiante de nuevo ingreso, pero sus respuestas son muy breves o nulas. No sabes si está bien o si necesita ayuda. 😬</p>
-                    <p class="mb-2"><strong>¿Cómo actuarías?</strong></p>
-                    <p class="suggestion-box text-orange-800">
-                        <em>Sugerencia:</em> Envía un mensaje empático y abierto, como: "Hola Juan, espero que estés muy bien. Quería saber cómo te sientes con el inicio de clases y si hay algo en lo que pueda apoyarte. Recuerda que estoy aquí para escucharte, sin importar si son dudas académicas o simplemente para charlar un poco sobre la experiencia virtual. No hay presión, solo quiero asegurarme de que te sientas acompañado." Si no responde, intenta una llamada breve o sugiere una videollamada corta para "presentarse formalmente". 📞
-                    </p>
-                </div>
-                <div class="case-study-box">
-                    <h4 class="text-xl font-semibold mb-2 text-green-700">Caso 2: La Sobrecarga de Tareas. 😩</h4>
-                    <p class="mb-2"><strong>Situación:</strong> María te escribe muy estresada, diciendo que tiene demasiadas tareas y no sabe por dónde empezar. Siente que no le da tiempo de nada. 🤯</p>
-                    <p class="mb-2"><strong>¿Cómo actuarías?</strong></p>
-                    <p class="suggestion-box text-orange-800">
-                        <em>Sugerencia:</em> Primero, valida su sentimiento: "Entiendo que te sientas abrumada, María. Es una sensación común al principio." Luego, sugiere una videollamada para revisar juntos su calendario y las fechas de entrega. Ayúdala a priorizar y a desglosar las tareas en pasos más pequeños. Podrías decirle: "Podemos hacer un plan para que veas que es manejable." 🗓️
-                    </p>
-                </div>
-                <div class="case-study-box">
-                    <h4 class="text-xl font-semibold mb-2 text-green-700">Caso 3: La Duda Técnica Recurrente. ❓</h4>
-                    <p class="mb-2"><strong>Situación:</strong> Luis te pregunta por tercera vez cómo subir un archivo a la plataforma, a pesar de que ya le has dado las instrucciones.  frustrated</p>
-                    <p class="mb-2"><strong>¿Cómo actuarías?</strong></p>
-                    <p class="suggestion-box text-orange-800">
-                        <em>Sugerencia:</em> En lugar de repetir las instrucciones, pregunta: "¿Qué parte del proceso te está generando más confusión, Luis? Quizás hay algo que no estoy explicando bien o que no está claro en la plataforma. Si te parece, podemos hacer una videollamada rápida y te comparto mi pantalla para que veas el paso a paso en vivo." Esto te permite identificar si es un problema de comprensión, de la plataforma o de atención. 🧐
-                    </p>
-                </div>
-            </div>
-            <button class="btn-primary mt-8" onclick="showPage('home-page')">Volver al Inicio</button>
-        </section>
-
-        <section id="conclusion-page" class="page-section">
-            <div class="bg-gradient-to-r from-blue-500 to-blue-700 text-white p-8 rounded-lg shadow-md text-center">
-                <h2 class="text-3xl font-bold mb-4">Cierre: Tu Impacto es Gigante 🎉</h2>
-                <p class="text-lg leading-relaxed mb-4">
-                    ¡Felicidades por llegar hasta aquí! Has demostrado tu compromiso y tu deseo de ser un mentor excepcional. Recuerda que tu labor va más allá de resolver dudas; eres un faro de guía, un motivador constante y un ejemplo a seguir. Cada mensaje, cada consejo, cada momento de escucha que ofreces, contribuye directamente al éxito y la permanencia de los nuevos estudiantes en la Universidad Virtual CNCI. 🌟
-                </p>
-                <p class="text-lg leading-relaxed">
-                    Tu experiencia es un tesoro, y al compartirla, no solo ayudas a otros a crecer, sino que también fortaleces tus propias habilidades de liderazgo, comunicación y empatía. Eres parte esencial de nuestra comunidad. ¡Gracias por ser un mentor increíble! 💖
-                </p>
-            </div>
-
-            <div class="bg-white p-8 rounded-lg shadow-md mt-8">
-                <h2 class="text-3xl font-bold mb-6 text-blue-700">Elementos Interactivos Sugeridos (Opcional):</h2>
-                <ul class="list-disc pl-6 text-lg space-y-3">
-                    <li>
-                        <strong>Preguntas de Reflexión:</strong> Al final de cada módulo, incluir preguntas como: "¿Qué estrategia de comunicación aplicarías en tu próxima interacción?", "¿Cómo manejarías una situación de desmotivación en un estudiante?" 🤔
-                    </li>
-                    <li>
-                        <strong>Checklist Descargable:</strong> Un PDF con un checklist de "Buenas Prácticas del Mentor" o "Pasos para una Videollamada Exitosa". ✅⬇️
-                    </li>
-                    <li>
-                        <strong>Recursos Adicionales:</strong> Enlaces a videos cortos sobre técnicas de estudio, gestión del tiempo o inteligencia emocional. 🔗📹
-                    </li>
-                    <li>
-                        <strong>Foro de Mentores:</strong> Un espacio en la plataforma de la universidad donde los mentores puedan compartir experiencias, dudas y soluciones entre ellos. 🗣️💡
-                    </li>
-                </ul>
-            </div>
-            <button class="btn-primary mt-8" onclick="showPage('home-page')">Volver al Inicio</button>
-        </section>
-
-    </main>
-
-    <footer class="bg-gray-800 text-white py-6 mt-8">
-        <div class="container mx-auto px-4 text-center text-sm">
-            &copy; 2025 Universidad Virtual CNCI. Todos los derechos reservados.
-        </div>
-    </footer>
-
-    <script>
-        // JavaScript for page navigation
-        function showPage(pageId) {
-            // Hide all pages
-            const pages = document.querySelectorAll('.page-section');
-            pages.forEach(page => {
-                page.classList.remove('active');
-            });
-
-            // Show the requested page
-            const activePage = document.getElementById(pageId);
-            if (activePage) {
-                activePage.classList.add('active');
-                window.scrollTo(0, 0); // Scroll to top of the page
+        // Calculate score
+        moduleQuiz.forEach((q, index) => {
+            if (answers[index] === q.answer) {
+                correctAnswersCount++;
             }
-        }
-
-        // Initialize by showing the home page on load
-        document.addEventListener('DOMContentLoaded', () => {
-            showPage('home-page');
         });
-    </script>
 
-</body>
-</html>
+        const totalQuestions = moduleQuiz.length;
+        const percentage = (correctAnswersCount / totalQuestions) * 100;
+
+        setQuizResults(prev => ({ ...prev, [moduleId]: percentage }));
+        setCompletedModules(prev => ({ ...prev, [moduleId]: true })); // Mark module as completed
+
+        setMessageBox({
+            visible: true,
+            title: 'Resultados del Quiz',
+            message: `Has obtenido un ${percentage.toFixed(0)}% de respuestas correctas. ¡Sigue así!`
+        });
+    };
+
+    // Function to handle checklist item toggling
+    const handleChecklistItemToggle = (moduleId, itemId) => {
+        setCurrentChecklists(prev => {
+            const newChecklists = { ...prev };
+            newChecklists[moduleId] = newChecklists[moduleId].map(item =>
+                item.id === itemId ? { ...item, completed: !item.completed } : item
+            );
+            return newChecklists;
+        });
+    };
+
+    // Function to handle contact form submission (kept for potential future use)
+    const handleContactSubmit = (e) => {
+        e.preventDefault();
+        // In a real application, this would send data to a backend
+        console.log('Mensaje de contacto enviado:', contactMessage);
+        setMessageBox({
+            visible: true,
+            title: 'Mensaje Enviado',
+            message: 'Tu mensaje ha sido recibido. Te contactaremos pronto.'
+        });
+        setContactMessage(''); // Clear the form
+    };
+
+    // Component for the message box
+    const MessageBox = ({ title, message, onClose }) => (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full text-center border-t-4 border-[#2a6aff]">
+                <h3 className="text-xl font-bold text-[#2a6aff] mb-4">{title}</h3>
+                <p className="text-gray-700 mb-6">{message}</p>
+                <button
+                    onClick={onClose}
+                    className="bg-[#2a6aff] hover:bg-opacity-80 text-white font-bold py-2 px-6 rounded-full transition duration-300 ease-in-out transform hover:scale-105 shadow-md"
+                >
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    );
+
+    // Render the content for each module
+    const renderModuleContent = () => {
+        switch (activeModule) {
+            case 'welcome':
+                return (
+                    <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-white rounded-lg shadow-lg animate-fade-in">
+                        <h2 className="text-4xl font-extrabold text-[#2a6aff] mb-6 leading-tight">
+                            ¡Bienvenido, Alumno Mentor CNCI!
+                        </h2>
+                        <p className="text-lg text-gray-700 mb-8 max-w-2xl mx-auto">
+                            Estamos emocionados de que formes parte de nuestro programa de mentoría. Tu rol es fundamental para el éxito y la adaptación de nuestros estudiantes de nuevo ingreso al entorno virtual.
+                        </p>
+                        <div className="relative w-full max-w-xl mx-auto mb-8 bg-gray-200 rounded-lg overflow-hidden shadow-inner aspect-video flex items-center justify-center">
+                            {/* Placeholder for video */}
+                            <img
+                                src="https://placehold.co/600x338/E0F2F7/2C3E50?text=Video+Motivacional"
+                                alt="Video Motivacional"
+                                className="w-full h-full object-cover"
+                                onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/600x338/E0F2F7/2C3E50?text=Video+Motivacional"; }}
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                                <span className="text-white text-2xl font-semibold">Video Motivacional del Equipo de Tutorías</span>
+                            </div>
+                        </div>
+                        <p className="text-md text-gray-600">
+                            Prepárate para ser una guía, un apoyo y una inspiración. ¡Tu impacto será inmenso!
+                        </p>
+                    </div>
+                );
+            case 'que-es-mentor':
+                return (
+                    <div className="p-6 bg-white rounded-lg shadow-lg animate-fade-in">
+                        <h2 className="text-3xl font-bold text-[#2a6aff] mb-6">¿Qué es ser un mentor CNCI?</h2>
+                        <p className="text-gray-700 mb-4">
+                            Ser un mentor en la Universidad Virtual CNCI significa ser un compañero experimentado que guía, apoya y facilita la adaptación de los estudiantes de nuevo ingreso al modelo educativo en línea. No eres un tutor académico, sino un facilitador y un modelo a seguir.
+                        </p>
+                        <h3 className="text-2xl font-semibold text-[#2a6aff] mb-3">Tu Rol Principal:</h3>
+                        <ul className="list-disc list-inside text-gray-700 mb-6 space-y-2">
+                            <li>Ofrecer orientación sobre el funcionamiento de la plataforma virtual.</li>
+                            <li>Compartir estrategias de estudio y organización personal.</li>
+                            <li>Fomentar la participación y la autonomía del nuevo estudiante.</li>
+                            <li>Ser un punto de contacto inicial para dudas generales.</li>
+                            <li>Promover un ambiente de confianza y compañerismo.</li>
+                        </ul>
+                        <div className="bg-blue-50 border-l-4 border-[#2a6aff] text-[#2a6aff] p-4 mb-6 rounded-md">
+                            <p className="font-semibold">¡Importante!</p>
+                            <p>No eres responsable de la calificación académica del alumno ni de resolver problemas técnicos complejos. Para eso, existen los canales institucionales.</p>
+                        </div>
+
+                        <h3 className="text-2xl font-semibold text-[#2a6aff] mb-3">Minievaluación:</h3>
+                        <Quiz moduleId="que-es-mentor" questions={quizzes['que-es-mentor']} onSubmit={handleSubmitQuiz} />
+                        {quizResults['que-es-mentor'] !== undefined && (
+                            <p className="mt-4 text-green-700 font-semibold">
+                                Tu resultado: {quizResults['que-es-mentor'].toFixed(0)}%
+                            </p>
+                        )}
+                    </div>
+                );
+            case 'perfil-estudiante':
+                return (
+                    <div className="p-6 bg-white rounded-lg shadow-lg animate-fade-in">
+                        <h2 className="text-3xl font-bold text-[#2a6aff] mb-6">Perfil del estudiante de nuevo ingreso</h2>
+                        <p className="text-gray-700 mb-4">
+                            Los estudiantes de nuevo ingreso pueden enfrentar diversos desafíos al adaptarse a la modalidad virtual. Comprender su perfil te ayudará a brindar un apoyo más efectivo.
+                        </p>
+                        <h3 className="text-2xl font-semibold text-[#2a6aff] mb-3">Características Comunes:</h3>
+                        <ul className="list-disc list-inside text-gray-700 mb-6 space-y-2">
+                            <li>Desorientación inicial con la plataforma y herramientas.</li>
+                            <li>Dificultad para gestionar su tiempo y organizar el estudio autónomo.</li>
+                            <li>Sentimiento de aislamiento o falta de conexión.</li>
+                            <li>Incertidumbre sobre las expectativas académicas.</li>
+                            <li>Necesidad de motivación y refuerzo positivo.</li>
+                        </ul>
+                        <div className="relative w-full max-w-lg mx-auto mb-8 bg-gray-100 rounded-lg overflow-hidden shadow-inner aspect-video flex items-center justify-center">
+                            {/* Placeholder for Infographic */}
+                            <img
+                                src="https://placehold.co/600x338/E0F2F7/2C3E50?text=Infografía+Perfil+Alumno"
+                                alt="Infografía Perfil Alumno"
+                                className="w-full h-full object-cover"
+                                onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/600x338/E0F2F7/2C3E50?text=Infografía+Perfil+Alumno"; }}
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                                <span className="text-white text-2xl font-semibold">Infografía: Perfil del Alumno de Nuevo Ingreso</span>
+                            </div>
+                        </div>
+                        <p className="text-md text-gray-600">
+                            Recuerda que cada estudiante es único, pero estas son tendencias generales. Sé paciente y adaptable.
+                        </p>
+                    </div>
+                );
+            case 'habilidades-mentor':
+                return (
+                    <div className="p-6 bg-white rounded-lg shadow-lg animate-fade-in">
+                        <h2 className="text-3xl font-bold text-[#2a6aff] mb-6">Habilidades esenciales del mentor</h2>
+                        <p className="text-gray-700 mb-4">
+                            Para ser un mentor efectivo, es fundamental desarrollar y aplicar ciertas habilidades interpersonales:
+                        </p>
+                        <h3 className="text-2xl font-semibold text-[#2a6aff] mb-3">1. Escucha Activa:</h3>
+                        <p className="text-gray-700 mb-4">
+                            Presta atención plena a lo que el estudiante dice (y lo que no dice). Haz preguntas abiertas y evita interrumpir.
+                        </p>
+                        <h3 className="text-2xl font-semibold text-[#2a6aff] mb-3">2. Empatía:</h3>
+                        <p className="text-gray-700 mb-4">
+                            Ponte en el lugar del otro. Intenta comprender sus sentimientos y perspectivas, incluso si no las compartes.
+                        </p>
+                        <h3 className="text-2xl font-semibold text-[#2a6aff] mb-3">3. Comunicación Asertiva:</h3>
+                        <p className="text-gray-700 mb-4">
+                            Exprésate de forma clara, directa y respetuosa. Ofrece retroalimentación constructiva.
+                        </p>
+                        <h3 className="text-2xl font-semibold text-[#2a6aff] mb-3">4. Seguimiento:</h3>
+                        <p className="text-gray-700 mb-6">
+                            Mantén contacto periódico con tus alumnos. Pregunta cómo van, si necesitan algo, y celebra sus avances.
+                        </p>
+
+                        <h3 className="text-2xl font-semibold text-[#2a6aff] mb-3">Checklist de Habilidades:</h3>
+                        <div className="bg-blue-50 p-4 rounded-lg shadow-inner">
+                            {currentChecklists['habilidades-mentor'].map(item => (
+                                <div key={item.id} className="flex items-center mb-2">
+                                    <input
+                                        type="checkbox"
+                                        id={`checklist-${item.id}`}
+                                        checked={item.completed}
+                                        onChange={() => handleChecklistItemToggle('habilidades-mentor', item.id)}
+                                        className="form-checkbox h-5 w-5 text-[#2a6aff] rounded focus:ring-[#2a6aff]"
+                                    />
+                                    <label htmlFor={`checklist-${item.id}`} className={`ml-3 text-lg ${item.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>
+                                        {item.text}
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
+
+                        <h3 className="text-2xl font-semibold text-[#2a6aff] mt-6 mb-3">Minievaluación:</h3>
+                        <Quiz moduleId="habilidades-mentor" questions={quizzes['habilidades-mentor']} onSubmit={handleSubmitQuiz} />
+                        {quizResults['habilidades-mentor'] !== undefined && (
+                            <p className="mt-4 text-green-700 font-semibold">
+                                Tu resultado: {quizResults['habilidades-mentor'].toFixed(0)}%
+                            </p>
+                        )}
+                    </div>
+                );
+            case 'herramientas-digitales':
+                return (
+                    <div className="p-6 bg-white rounded-lg shadow-lg animate-fade-in">
+                        <h2 className="text-3xl font-bold text-[#2a6aff] mb-6">Herramientas digitales y canales de contacto institucional</h2>
+                        <p className="text-gray-700 mb-4">
+                            Familiarízate con las herramientas que tus alumnos usarán y los canales a los que puedes referirlos.
+                        </p>
+                        <h3 className="text-2xl font-semibold text-[#2a6aff] mb-3">Plataformas Clave:</h3>
+                        <ul className="list-disc list-inside text-gray-700 mb-6 space-y-2">
+                            <li>
+                                <span className="font-semibold">Aulas Virtuales:</span> Donde se encuentran los materiales, actividades y foros de cada curso.
+                            </li>
+                            <li>
+                                <span className="font-semibold">Correo Institucional:</span> Medio oficial de comunicación con docentes y administración.
+                            </li>
+                            <li>
+                                <span className="font-semibold">Plataforma de Soporte Técnico:</span> Para incidencias con acceso, funcionamiento de la plataforma, etc.
+                            </li>
+                        </ul>
+                        <h3 className="text-2xl font-semibold text-[#2a6aff] mb-3">Canales de Contacto:</h3>
+                        <ul className="list-disc list-inside text-gray-700 mb-6 space-y-2">
+                            <li>
+                                <span className="font-semibold">Tutor Académico:</span> Para dudas específicas de contenido o calificaciones.
+                            </li>
+                            <li>
+                                <span className="font-semibold">Coordinación de Mentorías:</span> Para dudas sobre tu rol de mentor o situaciones complejas.
+                            </li>
+                            <li>
+                                <span className="font-semibold">Departamento de Servicios Escolares:</span> Para trámites administrativos.
+                            </li>
+                        </ul>
+
+                        <h3 className="text-2xl font-semibold text-[#2a6aff] mb-3">Checklist de Herramientas:</h3>
+                        <div className="bg-blue-50 p-4 rounded-lg shadow-inner">
+                            {currentChecklists['herramientas-digitales'].map(item => (
+                                <div key={item.id} className="flex items-center mb-2">
+                                    <input
+                                        type="checkbox"
+                                        id={`checklist-${item.id}`}
+                                        checked={item.completed}
+                                        onChange={() => handleChecklistItemToggle('herramientas-digitales', item.id)}
+                                        className="form-checkbox h-5 w-5 text-[#2a6aff] rounded focus:ring-[#2a6aff]"
+                                    />
+                                    <label htmlFor={`checklist-${item.id}`} className={`ml-3 text-lg ${item.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>
+                                        {item.text}
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            case 'casos-practicos':
+                return (
+                    <div className="p-6 bg-white rounded-lg shadow-lg animate-fade-in">
+                        <h2 className="text-3xl font-bold text-[#2a6aff] mb-6">Casos prácticos y situaciones comunes</h2>
+                        <p className="text-gray-700 mb-4">
+                            Aquí te presentamos algunos escenarios que podrías enfrentar como mentor y cómo abordarlos:
+                        </p>
+                        <div className="mb-6 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                            <div className="bg-gray-100 p-4 font-semibold text-[#2a6aff]">Caso 1: Dificultad Técnica</div>
+                            <div className="p-4 text-gray-700">
+                                <p className="font-semibold mb-2">Situación:</p>
+                                <p>Un alumno te contacta porque no puede acceder a un recurso en el aula virtual.</p>
+                                <p className="font-semibold mt-3 mb-2">Recomendación:</p>
+                                <p>Escucha activamente el problema. Pregúntale qué ha intentado. Si es un problema técnico claro, redirígelo al soporte técnico de CNCI, explicándole cómo contactarlos.</p>
+                            </div>
+                        </div>
+                        <div className="mb-6 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                            <div className="bg-gray-100 p-4 font-semibold text-[#2a6aff]">Caso 2: Desmotivación</div>
+                            <div className="p-4 text-gray-700">
+                                <p className="font-semibold mb-2">Situación:</p>
+                                <p>Un alumno expresa sentirse abrumado o desmotivado con la carga académica.</p>
+                                <p className="font-semibold mt-3 mb-2">Recomendación:</p>
+                                <p>Muestra empatía. Comparte tus propias experiencias de superación (si aplica). Ayúdale a desglosar las tareas en pasos más pequeños. Recuérdale sus metas y los recursos de apoyo disponibles.</p>
+                            </div>
+                        </div>
+                        <div className="mb-6 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                            <div className="bg-gray-100 p-4 font-semibold text-[#2a6aff]">Caso 3: Pregunta Académica Específica</div>
+                            <div className="p-4 text-gray-700">
+                                <p className="font-semibold mb-2">Situación:</p>
+                                <p>Un alumno te pregunta sobre un concepto específico de una materia o cómo resolver un ejercicio.</p>
+                                <p className="font-semibold mt-3 mb-2">Recomendación:</p>
+                                <p>Recuérdale que tu rol no es el de tutor académico. Oriéntalo a contactar a su tutor de la materia a través del correo institucional o los foros del aula virtual.</p>
+                            </div>
+                        </div>
+                        <p className="text-md text-gray-600">
+                            Estos son solo ejemplos. Usa tu juicio y no dudes en contactar a la coordinación de mentorías si enfrentas una situación que te parezca compleja.
+                        </p>
+                    </div>
+                );
+            case 'preguntas-frecuentes':
+                return (
+                    <div className="p-6 bg-white rounded-lg shadow-lg animate-fade-in">
+                        <h2 className="text-3xl font-bold text-[#2a6aff] mb-6">Preguntas frecuentes</h2>
+                        <div className="space-y-4">
+                            <details className="group border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-blue-50 transition duration-200 ease-in-out">
+                                <summary className="flex justify-between items-center font-semibold text-[#2a6aff] text-lg">
+                                    ¿Cuánto tiempo debo dedicar a la mentoría?
+                                    <span className="transform group-open:rotate-180 transition-transform duration-200">▼</span>
+                                </summary>
+                                <p className="mt-2 text-gray-700">
+                                    El tiempo es flexible, pero se sugiere un contacto inicial y luego seguimientos periódicos (ej. semanal o quincenal) según la necesidad del alumno. Lo importante es la calidad del apoyo.
+                                </p>
+                            </details>
+                            <details className="group border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-blue-50 transition duration-200 ease-in-out">
+                                <summary className="flex justify-between items-center font-semibold text-[#2a6aff] text-lg">
+                                    ¿Qué hago si un alumno no responde?
+                                    <span className="transform group-open:rotate-180 transition-transform duration-200">▼</span>
+                                </summary>
+                                <p className="mt-2 text-gray-700">
+                                    Intenta un par de veces más con diferentes medios (si tienes). Si sigue sin responder, informa a la coordinación de mentorías. No te lo tomes personal.
+                                </p>
+                            </details>
+                            <details className="group border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-blue-50 transition duration-200 ease-in-out">
+                                <summary className="flex justify-between items-center font-semibold text-[#2a6aff] text-lg">
+                                    ¿Puedo reunirme en persona con mi alumno?
+                                    <span className="transform group-open:rotate-180 transition-transform duration-200">▼</span>
+                                </summary>
+                                <p className="mt-2 text-gray-700">
+                                    La mentoría es virtual. Se desaconsejan las reuniones presenciales por seguridad y para mantener la naturaleza del programa.
+                                </p>
+                            </details>
+                            <details className="group border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-blue-50 transition duration-200 ease-in-out">
+                                <summary className="flex justify-between items-center font-semibold text-[#2a6aff] text-lg">
+                                    ¿Recibiré capacitación adicional?
+                                    <span className="transform group-open:rotate-180 transition-transform duration-200">▼</span>
+                                </summary>
+                                <p className="mt-2 text-gray-700">
+                                    Sí, la coordinación de mentorías ofrecerá sesiones de capacitación y talleres periódicos para fortalecer tus habilidades.
+                                </p>
+                            </details>
+                        </div>
+                    </div>
+                );
+            case 'recursos-adicionales':
+                return (
+                    <div className="p-6 bg-white rounded-lg shadow-lg animate-fade-in">
+                        <h2 className="text-3xl font-bold text-[#2a6aff] mb-6">Recursos adicionales</h2>
+                        <p className="text-gray-700 mb-4">
+                            Aquí encontrarás herramientas y enlaces útiles para tu labor como mentor:
+                        </p>
+                        <h3 className="text-2xl font-semibold text-[#2a6aff] mb-3">Plantillas Descargables:</h3>
+                        <ul className="list-disc list-inside text-gray-700 mb-6 space-y-2">
+                            <li>
+                                <a href="https://example.com/plantilla_seguimiento.pdf" download="Plantilla_Seguimiento_Mentor.pdf" className="text-[#2a6aff] hover:underline font-medium">
+                                    Plantilla de Seguimiento de Alumnos (PDF)
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://example.com/guia_primer_contacto.docx" download="Guia_Primer_Contacto.docx" className="text-[#2a6aff] hover:underline font-medium">
+                                    Guía para el Primer Contacto (Word)
+                                </a>
+                            </li>
+                        </ul>
+                        <h3 className="text-2xl font-semibold text-[#2a6aff] mb-3">Calendario Sugerido de Contacto:</h3>
+                        <p className="text-gray-700 mb-4">
+                            Este es un ejemplo de cómo podrías organizar tus contactos. Adáptalo a tus alumnos:
+                        </p>
+                        <div className="bg-blue-50 p-4 rounded-lg shadow-inner mb-6">
+                            <ul className="list-disc list-inside text-gray-700 space-y-1">
+                                <li><span className="font-semibold">Semana 1:</span> Primer contacto y bienvenida.</li>
+                                <li><span className="font-semibold">Semana 2-3:</span> Seguimiento sobre adaptación a la plataforma.</li>
+                                <li><span className="font-semibold">Mes 1:</span> Revisión de progreso general y resolución de dudas iniciales.</li>
+                                <li><span className="font-semibold">Mensual:</span> Contacto de seguimiento y motivación.</li>
+                            </ul>
+                        </div>
+                        <h3 className="text-2xl font-semibold text-[#2a6aff] mb-3">Enlaces a Plataformas CNCI:</h3>
+                        <ul className="list-disc list-inside text-gray-700 space-y-2">
+                            <li>
+                                <a href="https://cnci.blackboard.com/" target="_blank" rel="noopener noreferrer" className="text-[#2a6aff] hover:underline font-medium">
+                                    Aulas Virtuales CNCI
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://outlook.office.com/" target="_blank" rel="noopener noreferrer" className="text-[#2a6aff] hover:underline font-medium">
+                                    Correo Institucional CNCI (Outlook)
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://soporte.cnci.edu.mx/" target="_blank" rel="noopener noreferrer" className="text-[#2a6aff] hover:underline font-medium">
+                                    Soporte Técnico CNCI
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                );
+            case 'testimonios-mentores':
+                return (
+                    <div className="p-6 bg-white rounded-lg shadow-lg animate-fade-in">
+                        <h2 className="text-3xl font-bold text-[#2a6aff] mb-6">Testimonios y Videos de Mentores</h2>
+                        <p className="text-gray-700 mb-6">
+                            Escucha las experiencias y consejos de otros alumnos mentores que han participado en el programa. Sus historias te inspirarán y te darán una perspectiva valiosa.
+                        </p>
+
+                        <h3 className="text-2xl font-semibold text-[#2a6aff] mb-4">Videos de Experiencias:</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            {/* Video Testimonio 1 */}
+                            <div className="bg-gray-100 rounded-lg overflow-hidden shadow-md aspect-video flex items-center justify-center">
+                                {/* Placeholder for video embed - removed dark overlay */}
+                                <img
+                                    src="https://placehold.co/400x225/E0F2F7/2C3E50?text=Video+Testimonio+1"
+                                    alt="Video Testimonio 1"
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/400x225/E0F2F7/2C3E50?text=Video+Testimonio+1"; }}
+                                />
+                            </div>
+                            {/* Video Testimonio 2 */}
+                            <div className="bg-gray-100 rounded-lg overflow-hidden shadow-md aspect-video flex items-center justify-center">
+                                {/* Placeholder for video embed - removed dark overlay */}
+                                <img
+                                    src="https://placehold.co/400x225/E0F2F7/2C3E50?text=Video+Testimonio+2"
+                                    alt="Video Testimonio 2"
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/400x225/E0F2F7/2C3E50?text=Video+Testimonio+2"; }}
+                                />
+                            </div>
+                        </div>
+
+                        <h3 className="text-2xl font-semibold text-[#2a6aff] mb-4">Testimonios Escritos:</h3>
+                        <div className="space-y-6">
+                            <div className="bg-blue-50 p-5 rounded-lg shadow-inner border-l-4 border-[#2a6aff]">
+                                <p className="italic text-gray-800 mb-2">
+                                    "Ser mentor ha sido una de las experiencias más gratificantes de mi carrera universitaria. Ver cómo los nuevos estudiantes superan sus miedos iniciales gracias a un poco de orientación, es increíble."
+                                </p>
+                                <p className="text-right font-semibold text-[#2a6aff]">- Sofía G., Mentor desde 2022</p>
+                            </div>
+                            <div className="bg-blue-50 p-5 rounded-lg shadow-inner border-l-4 border-[#2a6aff]">
+                                <p className="italic text-gray-800 mb-2">
+                                    "Al principio no sabía qué esperar, pero el programa me dio las herramientas. Ahora me siento más conectado con la comunidad CNCI y he desarrollado habilidades de comunicación que me servirán para siempre."
+                                </p>
+                                <p className="text-right font-semibold text-[#2a6aff]">- Carlos M., Mentor desde 2023</p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            default:
+                return <div className="p-6 text-gray-700 animate-fade-in">Contenido no encontrado.</div>;
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-100 font-inter flex flex-col lg:flex-row">
+            {/* Tailwind CSS CDN */}
+            <script src="https://cdn.tailwindcss.com"></script>
+            {/* Font Inter */}
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+            {/* Custom CSS for fade-in animation */}
+            <style>
+                {`
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .animate-fade-in {
+                    animation: fadeIn 0.5s ease-out forwards;
+                }
+                `}
+            </style>
+
+            {/* Sidebar Navigation */}
+            <aside className="w-full lg:w-64 bg-[#2a6aff] text-white shadow-lg lg:min-h-screen p-4 flex flex-col">
+                <div className="text-center mb-8 mt-4">
+                    {/* Logo Section */}
+                    <img
+                        src="logo.png" // Assumes logo.png is in the same directory as index.html
+                        alt="Logo Universidad Virtual CNCI"
+                        className="h-16 mx-auto mb-4 rounded-lg shadow-md"
+                        onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/64x64/FFFFFF/000000?text=LOGO"; }} // Fallback image
+                    />
+                    <h1 className="text-2xl font-extrabold text-white">
+                        Guía Mentor <span className="text-[#ff8500]">CNCI</span>
+                    </h1>
+                </div>
+                <nav className="flex-grow">
+                    <ul className="space-y-2">
+                        {modules.map(module => (
+                            <li key={module.id}>
+                                <button
+                                    onClick={() => {
+                                        setActiveModule(module.id);
+                                        playClickSound(); // Play sound on click
+                                    }}
+                                    className={`flex items-center w-full text-left py-2 px-4 rounded-lg transition-all duration-300 ease-in-out
+                                        ${activeModule === module.id
+                                            ? 'bg-[rgba(42,106,255,0.8)] text-white font-bold shadow-md transform scale-105'
+                                            : 'hover:bg-[rgba(42,106,255,0.9)] text-white hover:translate-x-1'
+                                        }
+                                        ${completedModules[module.id] ? 'border-r-4 border-green-400' : ''}
+                                    `}
+                                >
+                                    <span className="mr-3 text-xl">{module.icon}</span>
+                                    {module.title}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                </nav>
+                <div className="mt-8 text-center text-gray-200 text-sm">
+                    © 2024 Universidad Virtual CNCI
+                </div>
+            </aside>
+
+            {/* Main Content Area */}
+            <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
+                <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
+                    {renderModuleContent()}
+                </div>
+            </main>
+
+            {/* Message Box */}
+            {messageBox.visible && (
+                <MessageBox
+                    title={messageBox.title}
+                    message={messageBox.message}
+                    onClose={() => setMessageBox({ ...messageBox, visible: false })}
+                />
+            )}
+        </div>
+    );
+};
+
+// Quiz Component
+const Quiz = ({ moduleId, questions, onSubmit }) => {
+    const [answers, setAnswers] = useState(Array(questions.length).fill(null));
+    const [submitted, setSubmitted] = useState(false);
+
+    const handleOptionChange = (qIndex, option) => {
+        const newAnswers = [...answers];
+        newAnswers[qIndex] = option;
+        setAnswers(newAnswers);
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        setSubmitted(true);
+        onSubmit(moduleId, answers);
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="mt-4 p-4 bg-blue-50 rounded-lg shadow-inner">
+            {questions.map((q, qIndex) => (
+                <div key={qIndex} className="mb-6 p-4 border border-blue-200 rounded-md bg-white shadow-sm">
+                    <p className="font-semibold text-gray-800 mb-3 text-lg">{qIndex + 1}. {q.question}</p>
+                    <div className="space-y-2">
+                        {q.options.map((option, oIndex) => (
+                            <label key={oIndex} className="flex items-center text-gray-700 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name={`question-${qIndex}`}
+                                    value={option}
+                                    checked={answers[qIndex] === option}
+                                    onChange={() => handleOptionChange(qIndex, option)}
+                                    className="form-radio h-4 w-4 text-[#2a6aff] focus:ring-[#2a6aff]"
+                                    disabled={submitted}
+                                />
+                                <span className="ml-2 text-base">
+                                    {option}
+                                    {submitted && answers[qIndex] === option && answers[qIndex] === q.answer && (
+                                        <span className="ml-2 text-green-600 font-bold">✓ Correcta</span>
+                                    )}
+                                    {submitted && answers[qIndex] === option && answers[qIndex] !== q.answer && (
+                                        <span className="ml-2 text-red-600 font-bold">✗ Incorrecta</span>
+                                    )}
+                                    {submitted && answers[qIndex] !== option && q.answer === option && (
+                                        <span className="ml-2 text-green-600 font-bold">(Correcta: {q.answer})</span>
+                                    )}
+                                </span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
+            ))}
+            {!submitted && (
+                <button
+                    type="submit"
+                    className="bg-[#2a6aff] hover:bg-opacity-80 text-white font-bold py-2 px-6 rounded-full transition duration-300 ease-in-out transform hover:scale-105 shadow-md mt-4"
+                >
+                    Enviar Respuestas
+                </button>
+            )}
+            {submitted && (
+                <p className="text-gray-600 mt-4 text-center">Quiz completado. Puedes revisar tus respuestas.</p>
+            )}
+        </form>
+    );
+};
+
+// Export the main App component
+export default App;
